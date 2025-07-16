@@ -135,25 +135,31 @@ class CSVDataset(Dataset):
 
 
 class MLP(nn.Module):
-    def __init__(A, in_dim, hidden_dims, out_dim, dropout):
+    """Simple feed-forward network with optional batch normalization."""
+
+    def __init__(self, in_dim, hidden_dims, out_dim, dropout, batch_norm=False):
         super().__init__()
-        B, C = [], in_dim
-        for D in hidden_dims:
-            B += [nn.Linear(C, D), nn.ReLU(), nn.Dropout(dropout)]
-            C = D
-        B.append(nn.Linear(C, out_dim))
-        A.net = nn.Sequential(*B)
-        A.apply(A._init_weights)
+        layers = []
+        dim = in_dim
+        for h in hidden_dims:
+            layers.append(nn.Linear(dim, h))
+            if batch_norm:
+                layers.append(nn.BatchNorm1d(h))
+            layers.extend([nn.ReLU(), nn.Dropout(dropout)])
+            dim = h
+        layers.append(nn.Linear(dim, out_dim))
+        self.net = nn.Sequential(*layers)
+        self.apply(self._init_weights)
 
-    def _init_weights(B, module):
-        A = module
-        if isinstance(A, nn.Linear):
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
             nn.init.kaiming_uniform_(
-                A.weight, mode='fan_in', nonlinearity='relu')
-            if A.bias is not _H:
-                nn.init.constant_(A.bias, 0)
+                module.weight, mode='fan_in', nonlinearity='relu')
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0)
 
-    def forward(A, x): return A.net(x)
+    def forward(self, x):
+        return self.net(x)
 
 
 def set_seed(seed=42): A = seed; random.seed(A); np.random.seed(
@@ -301,7 +307,17 @@ def train(cfg_path):
                    E else _J, persistent_workers=_J, drop_last=_E, prefetch_factor=2 if A[_K][i] > 0 else _H)
     A5 = DataLoader(q, batch_size=A[_K][_V], shuffle=_J, num_workers=A[_K][i], pin_memory=_E if B.type ==
                     E else _J, persistent_workers=_J, drop_last=_J, prefetch_factor=2 if A[_K][i] > 0 else _H)
-    C = MLP(N, A[_M][_W], R, A[_M][_X]).to(B)
+    C = MLP(N, A[_M][_W], R, A[_M][_X], batch_norm=A[_M].get('batch_norm', False)).to(B)
+
+    # Compute positive class weights to handle imbalance
+    cfg_weights = A[_D].get('class_weights')
+    if cfg_weights is not None:
+        pos_weight = torch.tensor(cfg_weights, dtype=torch.float32)
+    else:
+        label_sum = S.sum(dim=0)
+        total_labels = S.size(0)
+        pos_weight = (total_labels - label_sum) / (label_sum + 1e-6)
+        pos_weight = torch.clamp(pos_weight, min=1.0)
     AW = sum(A.numel()for A in C.parameters())
     print(f"🧠 Model has {AW:,} parameters")
     print(f"🔧 Model device: {next(C.parameters()).device}")
@@ -328,10 +344,10 @@ def train(cfg_path):
     else:
         I = optim.Adam(C.parameters(), lr=A[_D][_P], weight_decay=A[_D][AL])
         A7 = A[_D].get(k, {})
-        Z = optim.lr_scheduler.StepLR(I, step_size=A7.get(
-            'step_size', 10), gamma=A7.get('gamma', .1))
-        U = nn.BCEWithLogitsLoss()
-        a = GradScaler(E)if B.type == E else _H
+        Z = optim.lr_scheduler.StepLR(I, step_size=A7.get('step_size', 10),
+                                       gamma=A7.get('gamma', .1))
+        U = nn.BCEWithLogitsLoss(pos_weight=pos_weight.to(B))
+        a = GradScaler(E) if B.type == E else _H
         A8 = B.type == E
     if A8:
         print(f"🚀 Using Automatic Mixed Precision (AMP) training")
@@ -499,6 +515,9 @@ def train(cfg_path):
         for (w, G) in u.items():
             print(f"{w.upper()}:")
             print(f"  Accuracy: {G[_G]:.1f}%")
+            print(f"  Precision: {G['precision']:.3f}")
+            print(f"  Recall: {G['recall']:.3f}")
+            print(f"  F1: {G['f1']:.3f}")
             print(f"  Mean Prob: {G['mean_prob']:.3f}")
             print()
         print(f"📈 TRAINING SET METRICS:")
@@ -506,6 +525,9 @@ def train(cfg_path):
         for (w, G) in v.items():
             print(f"{w.upper()}:")
             print(f"  Accuracy: {G[_G]:.1f}%")
+            print(f"  Precision: {G['precision']:.3f}")
+            print(f"  Recall: {G['recall']:.3f}")
+            print(f"  F1: {G['f1']:.3f}")
             print(f"  Mean Prob: {G['mean_prob']:.3f}")
             print()
     AH = np.mean([A[_G]for A in u.values()])
@@ -658,10 +680,16 @@ def evaluate_model(model, data_loader, device, criterion):
 
     target_names = ['spread_win', 'total_win']
     metrics = {}
+    from sklearn.metrics import precision_recall_fscore_support
     for i, name in enumerate(target_names):
         accuracy = (preds[:, i] == targets[:, i]).mean() * 100
+        precision, recall, f1, _ = precision_recall_fscore_support(
+            targets[:, i], preds[:, i], average='binary', zero_division=0)
         metrics[name] = {
             'accuracy_pct': accuracy,
+            'precision': float(precision),
+            'recall': float(recall),
+            'f1': float(f1),
             'mean_prob': probs[:, i].mean()
         }
 

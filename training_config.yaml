@@ -12,8 +12,9 @@ data:
   shuffle: true        # shuffle data during training
 
 model:
-  hidden_dims: [10000, 8000, 4012, 512]  # Deeper architecture with gradual reduction
-  dropout: 0.3                # Increased dropout to reduce overfitting
+  hidden_dims: [512, 256, 128]            # Leaner architecture for stability
+  dropout: 0.4                            # Slightly higher dropout
+  batch_norm: true                        # Enable batch normalization
   input_size: 0               # will be calculated automatically
   output_size: 2                # 2 prediction targets (final_spread, final_total)
 
@@ -45,6 +46,8 @@ training:
   # Advanced training techniques
   label_smoothing: 0.1      # label smoothing for better generalization
   mixup_alpha: 0.2          # mixup augmentation parameter
+  # Optional class weighting for BCE loss
+  class_weights: null
 
 logging:
   log_interval: 25              # More frequent logging for better monitoring
