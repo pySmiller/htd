@@ -316,6 +316,19 @@ def generate_betting_report(enhanced_predictions, successful_preds):
     report.append(f"🔥 High Confidence Spread Opportunities: {high_conf_spread} ({high_conf_spread/total_games*100:.1f}%)")
     report.append(f"🔥 High Confidence Total Opportunities: {high_conf_total} ({high_conf_total/total_games*100:.1f}%)")
     report.append(f"💪 Strong Betting Opportunities: {strong_bets} ({strong_bets/total_games*100:.1f}%)")
+
+    spread_wins = [p for p in successful_preds if p.get('spread_result') == 'win']
+    total_wins = [p for p in successful_preds if p.get('total_result') == 'win']
+    spread_win_rate = len(spread_wins) / total_games * 100 if total_games else 0
+    total_win_rate = len(total_wins) / total_games * 100 if total_games else 0
+    overall_win_rate = (len(spread_wins) + len(total_wins)) / (2 * total_games) * 100 if total_games else 0
+
+    report.append(f"🏆 Spread Win Rate: {spread_win_rate:.1f}%")
+    report.append(f"🏆 Total Win Rate: {total_win_rate:.1f}%")
+    report.append(f"🏆 Overall Win Rate: {overall_win_rate:.1f}%")
+
+    roi = ((len(spread_wins) + len(total_wins)) * 0.91 - (2 * total_games - (len(spread_wins) + len(total_wins)))) / (2 * total_games) * 100 if total_games else 0
+    report.append(f"💰 Estimated ROI: {roi:.1f}%")
     report.append("")
     
     # Top Opportunities
@@ -389,6 +402,24 @@ def generate_betting_report(enhanced_predictions, successful_preds):
     report.append("   - Spread predictions less accurate than totals")
     report.append("   - Model performance depends on data quality")
     report.append("   - Past performance doesn't guarantee future results")
+
+    if successful_preds and 'game_date' in successful_preds[0]:
+        df = pd.DataFrame(successful_preds)
+        df['month'] = df['game_date'].str[:7]
+        monthly = df.groupby('month').agg(
+            games=('file', 'count'),
+            spread_wins=('spread_result', lambda x: (x == 'win').sum()),
+            total_wins=('total_result', lambda x: (x == 'win').sum())
+        )
+        report.append("")
+        report.append("📅 MONTHLY BREAKDOWN")
+        report.append("-" * 40)
+        report.append("Month | Games | Spread W% | Total W%")
+        report.append("----- | ----- | --------- | --------")
+        for month, row in monthly.iterrows():
+            spread_rate = row['spread_wins'] / row['games'] * 100 if row['games'] else 0
+            total_rate = row['total_wins'] / row['games'] * 100 if row['games'] else 0
+            report.append(f"{month} | {row['games']:5d} | {spread_rate:8.1f}% | {total_rate:8.1f}%")
     
     return "\n".join(report)
 
