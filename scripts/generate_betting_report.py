@@ -46,6 +46,14 @@ def generate_enhanced_betting_report(model_dir):
         f.write(f"Spread Betting Success: {spread_win_rate:.1f}%\n")
         f.write(f"Total Betting Success: {total_win_rate:.1f}%\n")
         f.write(f"Both Bets Success: {both_win_rate:.1f}%\n")
+
+        spread_roi = ((spread_wins * 0.91) - (spread_losses)) / total_games * 100 if total_games else 0
+        total_roi = ((total_wins * 0.91) - (total_losses)) / total_games * 100 if total_games else 0
+        overall_roi = (((spread_wins + total_wins) * 0.91) - (2 * total_games - (spread_wins + total_wins))) / (2 * total_games) * 100 if total_games else 0
+
+        f.write(f"Estimated Spread ROI: {spread_roi:.1f}%\n")
+        f.write(f"Estimated Total ROI: {total_roi:.1f}%\n")
+        f.write(f"Combined ROI: {overall_roi:.1f}%\n")
         
         # Profitability estimate (assuming -110 odds)
         if spread_win_rate > 52.38:  # Break-even point for -110 odds

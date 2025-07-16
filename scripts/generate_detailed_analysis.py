@@ -156,12 +156,19 @@ def create_detailed_betting_analysis(model_predictions_path, bm_predictions_path
             f.write(f"   Total Win Rate: {summary_stats['total_bet_win_rate']:.1f}%\n")
             f.write(f"   Average Confidence: {summary_stats['avg_total_confidence']:.2f}\n")
             f.write(f"   High Confidence Bets: {summary_stats['high_confidence_total_bets']}\n\n")
-            
+
             f.write(f"COMBINED BETTING PERFORMANCE:\n")
             f.write(f"   Both Bets Won: {summary_stats['both_bets_won']}/{summary_stats['total_games']}\n")
             f.write(f"   Both Bets Win Rate: {summary_stats['both_bets_win_rate']:.1f}%\n")
             f.write(f"   Either Bet Won: {summary_stats['either_bet_won']}/{summary_stats['total_games']}\n")
             f.write(f"   Either Bet Win Rate: {summary_stats['either_bet_win_rate']:.1f}%\n\n")
+
+            spread_roi = ((summary_stats['spread_bets_won'] * 0.91) - (summary_stats['total_games'] - summary_stats['spread_bets_won'])) / summary_stats['total_games'] * 100 if summary_stats['total_games'] else 0
+            total_roi = ((summary_stats['total_bets_won'] * 0.91) - (summary_stats['total_games'] - summary_stats['total_bets_won'])) / summary_stats['total_games'] * 100 if summary_stats['total_games'] else 0
+            overall_roi = (((summary_stats['spread_bets_won'] + summary_stats['total_bets_won']) * 0.91) - (2 * summary_stats['total_games'] - (summary_stats['spread_bets_won'] + summary_stats['total_bets_won']))) / (2 * summary_stats['total_games']) * 100 if summary_stats['total_games'] else 0
+            f.write(f"   Estimated Spread ROI: {spread_roi:.1f}%\n")
+            f.write(f"   Estimated Total ROI: {total_roi:.1f}%\n")
+            f.write(f"   Combined ROI: {overall_roi:.1f}%\n\n")
             
             # Top performing bets
             f.write(f"TOP 10 HIGHEST CONFIDENCE SPREAD BETS:\n")
