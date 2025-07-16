@@ -1,0 +1,92 @@
+# training_config.yaml
+# Optimized training configuration based on performance analysis
+device: cuda          # 'cpu' to force CPU, otherwise CUDA if available
+cuda_version: 12.1    # purely informational
+
+data:
+  train_dir: 'C:/Users/admin/Desktop/training/data'
+  outcomes_csv: 'C:/Users/admin/Desktop/training/outcomes.csv'
+  batch_size: 64
+  num_workers: 0      # Set to 0 to eliminate multiprocessing overhead
+  train_split: 0.82     # 80% for training, 20% for validation
+  shuffle: true        # shuffle data during training
+
+model:
+  hidden_dims: [10000, 8000, 4012, 512]  # Deeper architecture with gradual reduction
+  dropout: 0.3                # Increased dropout to reduce overfitting
+  input_size: 0               # will be calculated automatically
+  output_size: 2                # 2 prediction targets (final_spread, final_total)
+
+training:
+  epochs: 100    # More epochs to allow proper convergence
+  lr: 5.0e-5           # Lower learning rate for more stable training
+  weight_decay: 1.0e-4 # Increased weight decay to combat overfitting
+  optimizer: adamw     # AdamW for better regularization
+  scheduler:
+    type: cosine       # Cosine annealing for smoother learning rate decay
+    T_max: 200         # Full cycle length matches epochs
+    eta_min: 1.0e-6    # Minimum learning rate
+  
+  # Early stopping
+  early_stopping:
+    patience: 5       # More patience to allow proper convergence
+    min_delta: 0.0005  # Smaller threshold for improvement detection
+    
+  # Model saving
+  save_best_model: true      # save best model based on validation loss
+  save_checkpoint_every: 50       # save checkpoint every N epochs (more frequent)
+  save_last_model: true          # save final model for comparison
+  
+  # Gradient clipping for training stability
+  gradient_clipping:
+    enabled: true
+    max_norm: 1.0           # clip gradients to prevent explosion
+    
+  # Advanced training techniques
+  label_smoothing: 0.1      # label smoothing for better generalization
+  mixup_alpha: 0.2          # mixup augmentation parameter
+
+logging:
+  log_interval: 25              # More frequent logging for better monitoring
+  print_train_loss: true         # print training loss each epoch
+  print_val_loss: true           # print validation loss each epoch
+  verbose: true              # Enable detailed logging for debugging
+  
+  # Loss history
+  save_loss_history: true        # save loss curves to file
+  plot_losses: true              # generate loss plots
+  
+  # Advanced logging
+  log_gradients: true            # log gradient statistics
+  log_learning_rate: true        # log learning rate changes
+  log_memory_usage: true         # log GPU memory usage
+
+paths:
+  checkpoint_dir: './checkpoints'
+  log_dir: './logs'
+  best_model_path: './checkpoints/best_model.pth'
+  last_model_path: './checkpoints/last_model.pth'
+
+# Advanced training settings
+advanced:
+  # Data augmentation
+  data_augmentation:
+    enabled: true
+    noise_std: 0.01           # add small gaussian noise to inputs
+    dropout_prob: 0.05        # random feature dropout during training
+    
+  # Validation settings
+  validation:
+    frequency: 1              # validate every N epochs
+    use_best_model: true      # use best model for final evaluation
+    
+  # Numerical stability
+  numerical:
+    eps: 1e-8                 # epsilon for numerical stability
+    clip_value: 10.0          # clip extreme values
+    
+  # Performance optimization
+  performance:
+    compile_model: false      # PyTorch 2.0 model compilation (experimental)
+    mixed_precision: true     # automatic mixed precision training
+    find_unused_parameters: false  # for distributed training
