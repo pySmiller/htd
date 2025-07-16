@@ -243,24 +243,25 @@ def train(cfg_path):
             print('⚠️  CUDA not available, falling back to CPU')
     elif device_cfg == E:
         if not torch.cuda.is_available():
-            raise RuntimeError(
-                'CUDA is not available! Install PyTorch with CUDA support or set device to "cpu" or "auto" in config.')
-        B = torch.device(E)
-        print(f"🚀 Using CUDA device: {torch.cuda.get_device_name(0)}")
-        print(
-            f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory/1024**3:.1f} GB")
-        print(f"🔧 CUDA Version: {torch.version.cuda}")
-        print(f"🔧 PyTorch Version: {torch.__version__}")
-        print(f"🔧 CUDA Device Count: {torch.cuda.device_count()}")
-        print(f"🔧 Current CUDA Device: {torch.cuda.current_device()}")
-        n = torch.tensor([z, 2., 3.]).cuda()
-        print(f"✅ CUDA Test: {n.device} - {n.sum().item()}")
-        print(f"🔧 cuDNN enabled: {torch.backends.cudnn.enabled}")
-        print(f"🔧 cuDNN benchmark: {torch.backends.cudnn.benchmark}")
-        print(f"🔧 cuDNN version: {torch.backends.cudnn.version()}")
-        print(f"🔧 cuDNN deterministic: {torch.backends.cudnn.deterministic}")
-        del n
-        torch.cuda.empty_cache()
+            print('⚠️  CUDA not available, falling back to CPU')
+            B = torch.device('cpu')
+        else:
+            B = torch.device(E)
+            print(f"🚀 Using CUDA device: {torch.cuda.get_device_name(0)}")
+            print(
+                f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory/1024**3:.1f} GB")
+            print(f"🔧 CUDA Version: {torch.version.cuda}")
+            print(f"🔧 PyTorch Version: {torch.__version__}")
+            print(f"🔧 CUDA Device Count: {torch.cuda.device_count()}")
+            print(f"🔧 Current CUDA Device: {torch.cuda.current_device()}")
+            n = torch.tensor([z, 2., 3.]).cuda()
+            print(f"✅ CUDA Test: {n.device} - {n.sum().item()}")
+            print(f"🔧 cuDNN enabled: {torch.backends.cudnn.enabled}")
+            print(f"🔧 cuDNN benchmark: {torch.backends.cudnn.benchmark}")
+            print(f"🔧 cuDNN version: {torch.backends.cudnn.version()}")
+            print(f"🔧 cuDNN deterministic: {torch.backends.cudnn.deterministic}")
+            del n
+            torch.cuda.empty_cache()
     else:
         B = torch.device('cpu')
         print('⚠️  Using CPU for training')

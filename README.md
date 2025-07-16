@@ -10,7 +10,7 @@ This repository contains tools for training machine learning models to predict b
 
 2. **Configure Training**
    - Edit `training_config.yaml` to adjust hyperparameters.
-   - Set `device` to `auto` (default) to automatically use CUDA if available. Use `cuda` to require a GPU or `cpu` to force CPU execution.
+   - Set `device` to `auto` (default) to automatically use CUDA if available. Use `cuda` to request a GPU or `cpu` to force CPU execution. If a GPU is requested but unavailable, the script now falls back to CPU with a warning.
 
 3. **Run Training**
    ```bash
@@ -20,7 +20,7 @@ This repository contains tools for training machine learning models to predict b
 
 ## CUDA Notes
 
-The training script can leverage a CUDA‑enabled GPU for faster computation. If `device` is set to `cuda` but no GPU is detected, the script will raise an error. Using `device: auto` will gracefully fall back to CPU when CUDA is unavailable.
+The training script can leverage a CUDA‑enabled GPU for faster computation. When `device` is set to `cuda` but no GPU is detected, the script now falls back to CPU and prints a warning. Using `device: auto` performs this selection automatically.
 
 ## Reports
 
